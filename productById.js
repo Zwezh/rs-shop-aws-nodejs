@@ -3,7 +3,7 @@ import { products } from './data/products-data.mock';
 export const handler = async (event) => {
   try {
     const { id } = event.pathParameters;
-    const product = products.find((item) => item.id === id);
+    const product = products.find((item) => item.id === +id);
     return product
       ? {
           statusCode: 200,
