@@ -1,0 +1,47 @@
+service:
+  name: products-service
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+frameworkVersion: "2"
+
+# Add the serverless-webpack plugin
+plugins:
+  - serverless-webpack
+  
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: dev
+  region: eu-west-1
+  httpApi:
+    cors: true
+custom:
+  webpack:
+    webpackConfig: 'webpack.config.js' # Name of webpack configuration file
+    includeModules: true # Node modules configuration for packaging
+    packager: 'npm' # Packager that will be used to package your external modules
+    excludeFiles: src/**/*.test.js # Provide a glob for files to ignore
+functions:
+  products:
+    handler: products.handler
+    events:
+      - httpApi:
+          method: get
+          cors: true
+          path: /products
+  productById:
+    handler: productById.handler
+    events:
+      - httpApi:
+          method: get
+          cors: true
+          path: /products/{id}
+
+  # second:
+  #   handler: second.hello
+  #   events:
+  #     - httpApi:
+  #         method: get
+  #         path: /second
