@@ -29,15 +29,19 @@ functions:
     events:
       - httpApi:
           method: get
-          cors: true
           path: /products
   productById:
     handler: productById.handler
     events:
       - httpApi:
           method: get
-          cors: true
           path: /products/{id}
+  productCreate:
+    handler: productCreate.handler
+    events:
+      - httpApi:
+          method: post
+          path: /products
 
   # second:
   #   handler: second.hello
