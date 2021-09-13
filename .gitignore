@@ -49,3 +49,7 @@ jspm_packages
 
 # Serverless directories
 .serverless
+
+# Enviroments
+.env
+.env.*

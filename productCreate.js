@@ -2,12 +2,17 @@ import { Client } from 'pg';
 import { dbOptions } from './db-options';
 
 export const handler = async (event) => {
+  const { title, description, price, count } = JSON.parse(event.body);
+  if (!isValidInputData(title, description, price, count)) {
+    return {
+      statusCode: 400,
+      body: 'Data for new product is invalid'
+    };
+  }
+  console.info('valid', isValidInputData(title, description, price, count));
   const client = new Client(dbOptions);
   await client.connect();
   try {
-    const { title, description, price, count } = JSON.parse(event.body);
-    if (!title || !description || !price || !count)
-      throw 'Data for new product is invalid';
     const { rows: result } = await client.query(`
     with new_product as (
       insert into products(title, description, price)
@@ -23,18 +28,35 @@ export const handler = async (event) => {
       body: JSON.stringify(result)
     };
   } catch (error) {
-    if (error !== 'Data for new product is invalid') {
-      return {
-        statusCode: 500,
-        body: 'Unexpected error'
-      };
-    } else {
-      return {
-        statusCode: 400,
-        body: error
-      };
-    }
+    return {
+      statusCode: 500,
+      body: 'Unexpected error'
+    };
   } finally {
     client.end();
   }
 };
+
+const isValidInputData = (title, description, price, count) => {
+  if (!title || !description || !price || !count) return false;
+  if (!isCorrectNumberValue(price)) return false;
+  if (!isCorrectNumberValue(count)) return false;
+  if (title.length === 0 || description.length === 0) return false;
+  console.info(
+    '!title || !description || !price || !count',
+    !title || !description || !price || !count
+  );
+  console.info('!isCorrectNumberValue(price)', !isCorrectNumberValue(price));
+  console.info('!isCorrectNumberValue(count)', !isCorrectNumberValue(count));
+  console.info(
+    'title.length === 0 || description.length === 0',
+    title.length === 0 || description.length === 0
+  );
+  return true;
+};
+
+const isCorrectNumberValue = (value) =>
+  typeof value === 'number' &&
+  value > 0 &&
+  value % 1 === 0 &&
+  Math.pow(2, 32) - 1 > value;
