@@ -1,0 +1,51 @@
+service:
+  name: import-service
+frameworkVersion: "2"
+
+useDotenv: true
+
+plugins:
+  - serverless-webpack
+  
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: dev
+  region: ${env:AWS_REGION}
+  httpApi:
+    cors: true
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action: "s3:ListBucket"
+      Resource:
+        - "arn:aws:s3:::${env:AWS_REGION}"
+    - Effect: "Allow"
+      Action: 
+        - "s3:*"
+      Resource:
+        - "arn:aws:s3:::${env:AWS_REGION}/*"
+    
+custom:
+  webpack:
+    webpackConfig: 'webpack.config.js'
+    includeModules: true
+    packager: 'npm'
+    excludeFiles: tests/**/*.test.js
+functions:
+  importProductsFile:
+    handler: handlers/importProductsFile.handler
+    events:
+      - httpApi:
+          method: get
+          path: /import
+          cors: true
+  importFileParser:
+    handler: handlers/importFileParser.handler
+    events:
+      - s3:
+          bucket: ${env:AWS_REGION}
+          event: s3:ObjectCreated:*
+          rules: 
+            - prefix: uploaded/
+          existing: true
