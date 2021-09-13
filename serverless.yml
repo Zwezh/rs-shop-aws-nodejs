@@ -1,47 +1,51 @@
 service:
   name: products-service
-# app and org for use with dashboard.serverless.com
-#app: your-app-name
-#org: your-org-name
-frameworkVersion: "2"
+frameworkVersion: '2'
 
-# Add the serverless-webpack plugin
+useDotenv: true
+
 plugins:
   - serverless-webpack
-  
+
 provider:
   name: aws
   runtime: nodejs12.x
   lambdaHashingVersion: 20201221
   stage: dev
-  region: eu-west-1
+  region: ${env:AWS_REGION}
   httpApi:
     cors: true
+  environment:
+    PG_HOST: ${env:PG_HOST}
+    PG_PORT: ${env:PG_PORT}
+    PG_DATABASE: ${env:PG_DATABASE}
+    PG_USERNAME: ${env:PG_USERNAME}
+    PG_PASSWORD: ${env:PG_PASSWORD}
 custom:
   webpack:
-    webpackConfig: 'webpack.config.js' # Name of webpack configuration file
-    includeModules: true # Node modules configuration for packaging
-    packager: 'npm' # Packager that will be used to package your external modules
-    excludeFiles: src/**/*.test.js # Provide a glob for files to ignore
+    webpackConfig: 'webpack.config.js'
+    includeModules: true
+    packager: 'npm'
+    excludeFiles: src/**/*.test.js
+  dotenv:
+    required:
+      file: true
 functions:
   products:
     handler: products.handler
     events:
       - httpApi:
           method: get
-          cors: true
           path: /products
   productById:
     handler: productById.handler
     events:
       - httpApi:
           method: get
-          cors: true
           path: /products/{id}
-
-  # second:
-  #   handler: second.hello
-  #   events:
-  #     - httpApi:
-  #         method: get
-  #         path: /second
+  productCreate:
+    handler: productCreate.handler
+    events:
+      - httpApi:
+          method: post
+          path: /products

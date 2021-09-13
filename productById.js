@@ -1,19 +1,28 @@
-import { products } from './data/products-data.mock';
+import { Client } from 'pg';
+import { dbOptions } from './db-options';
 
 export const handler = async (event) => {
+  const client = new Client(dbOptions);
+  await client.connect();
   try {
     const { id } = event.pathParameters;
-    const product = products.find((item) => item.id === +id);
-    return product
-      ? {
-          statusCode: 200,
-          body: JSON.stringify(product)
-        }
-      : {
-          statusCode: 404,
-          body: 'A product with the specified ID was not found.'
-        };
+    const { rows: result } = await client.query(`
+          select id, title, description, price, count 
+            from products 
+            inner join stocks 
+            on products.id = stocks.product_id
+            where products.id = '${id}'
+    `);
+    return {
+      statusCode: 200,
+      body: JSON.stringify(result[0])
+    };
   } catch (error) {
-    throw 'Unexpected error';
+    return {
+      statusCode: 500,
+      body: error
+    };
+  } finally {
+    client.end();
   }
 };
