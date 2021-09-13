@@ -9,7 +9,6 @@ export const handler = async (event) => {
       body: 'Data for new product is invalid'
     };
   }
-  console.info('valid', isValidInputData(title, description, price, count));
   const client = new Client(dbOptions);
   await client.connect();
   try {
@@ -42,16 +41,6 @@ const isValidInputData = (title, description, price, count) => {
   if (!isCorrectNumberValue(price)) return false;
   if (!isCorrectNumberValue(count)) return false;
   if (title.length === 0 || description.length === 0) return false;
-  console.info(
-    '!title || !description || !price || !count',
-    !title || !description || !price || !count
-  );
-  console.info('!isCorrectNumberValue(price)', !isCorrectNumberValue(price));
-  console.info('!isCorrectNumberValue(count)', !isCorrectNumberValue(count));
-  console.info(
-    'title.length === 0 || description.length === 0',
-    title.length === 0 || description.length === 0
-  );
   return true;
 };
 
