@@ -14,6 +14,9 @@ provider:
   lambdaHashingVersion: 20201221
   stage: dev
   region: ${env:REGION}
+  environment:
+    SQS_URL:
+      Ref: SQSQueue
   httpApi:
     cors: true
   iamRoleStatements:
@@ -26,7 +29,13 @@ provider:
         - "s3:*"
       Resource:
         - "arn:aws:s3:::${env:BUCKET}/*"
-    
+    - Effect: "Allow"
+      Action:
+        - "sqs:*"
+      Resource:
+        - Fn::GetAtt:
+          - SQSQueue
+          - Arn
 custom:
   webpack:
     webpackConfig: 'webpack.config.js'
@@ -50,3 +59,14 @@ functions:
           rules: 
             - prefix: uploaded/
           existing: true
+resources:
+  Resources:
+    SQSQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: catalogItemsQueue
+  Outputs:
+    SqsQueueArn:
+      Value: !GetAtt SQSQueue.Arn
+      Export:
+        Name: SQSQueueArn
