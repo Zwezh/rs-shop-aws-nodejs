@@ -1,20 +1,17 @@
 import S3 from 'aws-sdk/clients/s3';
 
-const { AWS_REGION, BUCKET } = process.env;
+const { REGION, BUCKET = 'upload-cars'} = process.env;
 
 export const handler = async (event) => {
   const fileName = event.queryStringParameters.name;
-
   if (!fileName) {
     return {
       statusCode: 400,
       body: { error: 'Bad Request: provide name as query string param' }
     };
   }
-  console.info(BUCKET);
-
   const path = `uploaded/${fileName}`;
-  const s3 = new S3({ region: AWS_REGION });
+  const s3 = new S3({ region: REGION });
   const params = {
     Bucket: BUCKET,
     Key: path,

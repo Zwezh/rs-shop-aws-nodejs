@@ -1,7 +1,7 @@
 import * as AWS from 'aws-sdk';
 import * as csv from 'csv-parser';
 
-const { AWS_REGION } = process.env;
+const { REGION } = process.env;
 
 export const handler = async (event, _context) => {
   for (const record of event?.Records) {
@@ -23,7 +23,7 @@ export const handler = async (event, _context) => {
 };
 
 async function runOperation(bucket, object) {
-  const s3 = new AWS.S3({ region: AWS_REGION, signatureVersion: 'v4' });
+  const s3 = new AWS.S3({ region: REGION, signatureVersion: 'v4' });
   const params = {
     Bucket: bucket.name,
     Key: object.key
