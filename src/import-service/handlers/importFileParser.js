@@ -1,7 +1,7 @@
-import * as AWS from 'aws-sdk';
+import { S3, SQS } from 'aws-sdk';
 import * as csv from 'csv-parser';
 
-const { AWS_REGION } = process.env;
+const { REGION, SQS_URL } = process.env;
 
 export const handler = async (event, _context) => {
   for (const record of event?.Records) {
@@ -23,7 +23,8 @@ export const handler = async (event, _context) => {
 };
 
 async function runOperation(bucket, object) {
-  const s3 = new AWS.S3({ region: AWS_REGION, signatureVersion: 'v4' });
+  const s3 = new S3({ region: REGION, signatureVersion: 'v4' });
+  const sqs = new SQS();
   const params = {
     Bucket: bucket.name,
     Key: object.key
@@ -33,7 +34,14 @@ async function runOperation(bucket, object) {
     s3.getObject(params)
       .createReadStream()
       .pipe(csv())
-      .on('data', (data) => console.log(data))
+      .on('data', async (data) => {
+        try {
+          await sqs.sendMessage(message(data)).promise();
+          console.log(`Data was sent: ${JSON.stringify(data)}`);
+        } catch (err) {
+          console.error(JSON.stringify(err.message));
+        }
+      })
       .on('error', (error) => {
         console.error(error);
         reject();
@@ -60,3 +68,7 @@ async function runOperation(bucket, object) {
       });
   });
 }
+const message = (data) => ({
+  QueueUrl: SQS_URL,
+  MessageBody: JSON.stringify(data)
+});

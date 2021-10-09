@@ -6,13 +6,14 @@ useDotenv: true
 
 plugins:
   - serverless-webpack
+  - serverless-dotenv-plugin
 
 provider:
   name: aws
   runtime: nodejs12.x
   lambdaHashingVersion: 20201221
   stage: dev
-  region: ${env:AWS_REGION}
+  region: ${env:REGION}
   httpApi:
     cors: true
   environment:
@@ -21,6 +22,19 @@ provider:
     PG_DATABASE: ${env:PG_DATABASE}
     PG_USERNAME: ${env:PG_USERNAME}
     PG_PASSWORD: ${env:PG_PASSWORD}
+    SNS_ARN:
+      Ref: SNSTopic
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "sns:*"
+      Resource:
+        Ref: SNSTopic
+    - Effect: "Allow"
+      Action:
+        - "sqs:*"
+      Resource:
+        - !ImportValue SQSQueueArn
 custom:
   webpack:
     webpackConfig: 'webpack.config.js'
@@ -49,3 +63,36 @@ functions:
       - httpApi:
           method: post
           path: /products
+  catalogBatchProcess:
+    handler: catalogBatchProcess.handler
+    events:
+      - sqs:
+          batchSize: 2
+          arn:
+            !ImportValue SQSQueueArn
+resources:
+  Resources:
+    SNSTopic:
+      Type: "AWS::SNS::Topic"
+      Properties:
+        TopicName: "createProductTopic"
+    SNSSubscriptionProductImportSuccess:
+      Type: "AWS::SNS::Subscription"
+      Properties:
+        Endpoint: "${env:SUCCESS_EMAIL}"
+        Protocol: "email"
+        TopicArn:
+          Ref: "SNSTopic"
+        FilterPolicy: {
+            status: ["success"]
+        }
+    SNSSubscriptionProductImportFail:
+      Type: "AWS::SNS::Subscription"
+      Properties:
+        Endpoint: "${env:FAIL_EMAIL}"
+        Protocol: "email"
+        TopicArn:
+          Ref: "SNSTopic"
+        FilterPolicy: {
+          status: ["fail"]
+        }
