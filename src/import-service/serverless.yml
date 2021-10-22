@@ -46,10 +46,16 @@ functions:
   importProductsFile:
     handler: handlers/importProductsFile.handler
     events:
-      - httpApi:
+      - http:
           method: get
           path: /import
           cors: true
+          authorizer:
+            type: token
+            name: BasicAuthorizer
+            resultTtlInSeconds: 300
+            identitySource: method.request.header.Authorization
+            arn: !ImportValue BasicAuthorizerArn
   importFileParser:
     handler: handlers/importFileParser.handler
     events:
@@ -65,6 +71,16 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: catalogItemsQueue
+    GatewayResponse:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: EXPIRED_TOKEN
+        RestApiId: 
+          Ref: 'ApiGatewayRestApi'
+        StatusCode: '401'
   Outputs:
     SqsQueueArn:
       Value: !GetAtt SQSQueue.Arn
